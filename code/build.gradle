@@ -1,0 +1,82 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
+        classpath "me.champeau.gradle:jmh-gradle-plugin:0.2.0"
+    }
+}
+
+group = 'com.github.srvaroa'
+version = '0.1-SNAPSHOT'
+
+defaultTasks 'clean', 'build'
+
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'me.champeau.gradle.jmh'
+
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'JBcnConf - It is slow',
+                   'Implementation-Version': version
+    }
+}
+
+compileJava {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+}
+
+sourceSets {
+    main { java { srcDirs = ['src/main/java'] } }
+    jmh { java { srcDirs = ['src/jmh/java'] } }
+}
+
+dependencies {
+   compile "org.openjdk.jmh:jmh-core:1.12",
+           'org.eclipse.jetty:jetty-server:9.3.9.M1',
+           'org.eclipse.jetty:jetty-servlet:9.3.9.M1',
+           'io.reactivex:rxjava:1.1.5',
+           'org.jctools:jctools-core:1.2',
+           'org.slf4j:slf4j-api:1.7.7',
+           'ch.qos.logback:logback-classic:1.1.3'
+
+    testCompile 'junit:junit:4.12'
+}
+
+configurations.all {
+    exclude group: "log4j", module: "log4j"
+}
+
+repositories {
+    mavenCentral()
+}
+
+jmh {
+    include = '*.*'
+    jmhVersion = "1.12"
+    warmupIterations = 5
+    iterations = 5
+    fork = 5
+    jvmArgsAppend = "-XX:+PreserveFramePointer"
+    timeUnit = 'ms'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.8'
+}
+
+test {
+    testLogging { events "started", "passed", "skipped", "failed" }
+}
+
+task runJettyServer(type: JavaExec) {
+    main = "com.github.srvaroa.ws.JettyServer"
+    classpath sourceSets.main.runtimeClasspath
+    jvmArgs += "-XX:+PreserveFramePointer"
+}
+
+mainClassName = "com.github.srvaroa.queue.SimpleApp"

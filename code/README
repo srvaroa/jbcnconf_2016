@@ -1,0 +1,16 @@
+Building
+========
+
+    ./gradlew assemble
+    ./gradlew test
+    ./gradlew jmh # long!
+
+Packaging
+=========
+
+    ./gradlew shadowJar
+
+Running
+=======
+
+    java -cp ./build/libs/jbcnconf-0.1-SNAPSHOT-all.jar com.github.srvaroa.queue.SimpleApp

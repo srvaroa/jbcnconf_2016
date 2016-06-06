@@ -1,0 +1,6 @@
+jetty_server.svg
+----------------
+
+A very simple server taking requests and parsing the URL.
+
+Note that most of the time is spent on the park/unpark calls.

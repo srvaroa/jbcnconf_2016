@@ -1,0 +1,10 @@
+**/*.iml
+**/.gradle
+**/.idea
+**/build
+**/*.class
+.gradle
+**/*.hist
+vm/.vagrant
+vm/data/*.svg
+vm/data/*.jar
