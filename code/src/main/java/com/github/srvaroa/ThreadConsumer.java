@@ -14,6 +14,7 @@ public class ThreadConsumer<T> extends LatchedThread {
 
     private final Queue<T> q;
     private final Consumer c;
+    public long consumed = 0;
 
     public ThreadConsumer(Queue<T> q, int id, CountDownLatch l, Consumer c) {
         super("consumer-" + id, l);
@@ -31,6 +32,7 @@ public class ThreadConsumer<T> extends LatchedThread {
             if (i == null) {
                 LockSupport.parkNanos(1000);
             } else {
+                consumed++;
                 c.accept(i);
             }
         }
