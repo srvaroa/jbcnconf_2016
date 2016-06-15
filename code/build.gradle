@@ -56,8 +56,8 @@ repositories {
 }
 
 jmh {
-    include = '*.*'
     jmhVersion = "1.12"
+    include = "QueueBenchmark"
     warmupIterations = 5
     iterations = 5
     fork = 5

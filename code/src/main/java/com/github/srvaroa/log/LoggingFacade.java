@@ -29,6 +29,7 @@ public class LoggingFacade {
     private static final ILogger _jul = msg -> jul.info(msg);
     private static final ILogger _logback = msg -> logback.info(msg);
     private static final ILogger _stdout = msg -> System.out.println(msg);
+    private static final ILogger _devnull = msg -> {};
 
     public static ILogger get() {
         return _stdout;

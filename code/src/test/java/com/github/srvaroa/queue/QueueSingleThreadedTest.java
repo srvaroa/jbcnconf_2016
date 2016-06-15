@@ -37,6 +37,7 @@ public abstract class QueueSingleThreadedTest {
         for (int i = 0; i < size; i++) {
             assertTrue(rb.push(i));
         }
+        // Question: this fails on JcToolsMpmcBackedQueue. Why?
         assertFalse(rb.push(size + 1));
         assertFalse(rb.push(size + 1));
         for (int i = 0; i < size; i++) {
