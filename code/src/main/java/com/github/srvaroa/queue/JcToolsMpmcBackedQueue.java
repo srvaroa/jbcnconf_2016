@@ -11,12 +11,12 @@ public class JcToolsMpmcBackedQueue<T> implements Queue<T> {
     }
 
     @Override
-    public synchronized T take() {
+    public T take() {
         return q.poll();
     }
 
     @Override
-    public synchronized boolean push(T t) {
+    public boolean push(T t) {
         return q.offer(t);
     }
 

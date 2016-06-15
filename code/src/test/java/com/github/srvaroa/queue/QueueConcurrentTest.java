@@ -8,46 +8,36 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public abstract class QueueConcurrentTest {
 
-    public final int capacity = 10000;
+    public final int capacity = 100;
 
-    public Queue<Integer> rb;
+    public Queue<Long> rb;
     public CountDownLatch startPistol;
     public CountDownLatch completed;
 
     Producer[] producers;
     Consumer[] consumers;
 
-    class Consumer extends LatchedThread {
-        ArrayList<Integer> consumed = new ArrayList<>();
+    // Used by producers
+    AtomicLong producerIdx;
+    final int maxToEmit = capacity * 2;
 
-        public Consumer(String name, CountDownLatch latch) {
-            super(name, latch);
-        }
-
-        @Override
-        public void run() {
-            super.run();
-            for (int i = 0; i < capacity; i++) {
-                Integer t = rb.take();
-                if (t != null)
-                    consumed.add(t);
-                Thread.yield();
-            }
-            completed.countDown();
-        }
+    @Before
+    public final void setUp() {
+        producerIdx = new AtomicLong(0);
     }
 
+    /**
+     * All Producer instances collaborate to emit monotonically increasing
+     * numbers until `maxToEmit`.
+     */
     class Producer extends LatchedThread {
-
-        ArrayList<Integer> inserted = new ArrayList<>();
-
-        volatile boolean running = true;
 
         public Producer(String name, CountDownLatch latch) {
             super(name, latch);
@@ -56,16 +46,43 @@ public abstract class QueueConcurrentTest {
         @Override
         public void run() {
             super.run();
-            running = true;
-            int i = 0;
-            while (running) {
-                if (rb.push(i) && running) {
-                    inserted.add(i);
+            long next = -1;
+            do {
+                if (next == -1 || rb.push(next)) {
+                    // load the next one to push
+                    next = producerIdx.getAndIncrement();
                 }
-                Thread.yield();
+                LockSupport.parkNanos(100);
+            } while (next < maxToEmit);
+            System.out.println("Producer completed");
+            completed.countDown();
+        }
+    }
+
+    /**
+     * Keeps pulling elements from the buffer until told to stop.
+     */
+    class Consumer extends LatchedThread {
+        ArrayList<Long> consumed = new ArrayList<>();
+        volatile boolean running;
+
+        public Consumer(String name, CountDownLatch latch) {
+            super(name, latch);
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            running = true;
+            while (running) {
+                Long t = rb.take();
+                if (t != null)
+                    consumed.add(t);
+                LockSupport.parkNanos(50);
             }
         }
     }
+
 
     @Before
     public void setup() {
@@ -73,10 +90,10 @@ public abstract class QueueConcurrentTest {
         rb = this.getInstance(capacity);
     }
 
-    abstract Queue<Integer> getInstance(int capacity);
+    abstract Queue<Long> getInstance(int capacity);
 
     void bootstrap(int nProducers, int nConsumers) {
-        completed = new CountDownLatch(nConsumers);
+        completed = new CountDownLatch(nProducers);
         producers = new Producer[nProducers];
         consumers = new Consumer[nConsumers];
         for (int i = 0; i < nProducers; i++) {
@@ -114,26 +131,40 @@ public abstract class QueueConcurrentTest {
         verify();
     }
 
-    void verify() {
-        ArrayList<Integer> allProduced = new ArrayList<>();
-        for (Producer p : producers) {
-            p.running = false;
-            allProduced.addAll(p.inserted);
-        }
-        ArrayList<Integer> allConsumed = new ArrayList<>();
-        for (Consumer c : consumers)
+    void verify() throws InterruptedException {
+
+        ArrayList<Long> allConsumed = new ArrayList<>();
+
+        System.out.println("Waking consumers");
+        for (Consumer c : consumers) {
+            c.running = false;
             allConsumed.addAll(c.consumed);
-
-        Collections.sort(allProduced);
-        Collections.sort(allConsumed);
-
-        for (Integer c : allConsumed) {
-            Integer p = allProduced.remove(0);
-            if (!p.equals(c)) {
-                System.err.println(allProduced);
-            }
-            assertEquals(c, p);
         }
+
+        System.out.println("Producer index: " + this.producerIdx);
+
+        // Producers may have pushed pending stuff that consumers didn't see
+        Long l;
+        while((l = this.rb.take()) != null) {
+            System.out.println("Draining: " + l);
+            allConsumed.add(l);
+        }
+
+        Collections.sort(allConsumed);
+        System.out.println(allConsumed);
+
+        Long prev = null;
+        do {
+            Long curr = allConsumed.remove(0);
+            assertNotNull(curr);
+            if (prev == null) {
+                assertEquals(Long.valueOf(0), curr);
+            } else {
+                assertEquals("It's monotonic",
+                    Long.valueOf(prev), Long.valueOf(curr-1));
+            }
+            prev = curr;
+        } while(!allConsumed.isEmpty());
 
     }
 

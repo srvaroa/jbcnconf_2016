@@ -13,4 +13,4 @@ Packaging
 Running
 =======
 
-    java -cp ./build/libs/jbcnconf-0.1-SNAPSHOT-all.jar com.github.srvaroa.queue.SimpleApp
+    java -cp ./build/libs/jbcnconf-0.1-SNAPSHOT-all.jar com.github.srvaroa.queue.SimpleApp  [queue class name]

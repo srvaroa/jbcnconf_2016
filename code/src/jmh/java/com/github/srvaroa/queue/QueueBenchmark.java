@@ -14,17 +14,18 @@ import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.Throughput)
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Warmup(iterations = 5)
+@Measurement(iterations = 5)
+@Fork
 public class QueueBenchmark {
 
     @Param({
-            /*
         "UnsafeQueue",
+        "SynchronizedQueue",
         "LinkedBackedQueue",
         "NotReallySafeQueue",
-        "SynchronizedQueue",
         "SafeAtomicRefQueue",
-        "SafeQueue",*/
+        "SafeQueue",
         "JcToolsMmpcBackedQueue"
     })
     public String impl;
@@ -33,7 +34,7 @@ public class QueueBenchmark {
 
     @Setup
     public void setup() throws Exception {
-        buffer = QueueFactory.get(impl);
+        buffer = QueueFactory.get(impl, 10000);
     }
 
     private void produce() {
@@ -51,6 +52,7 @@ public class QueueBenchmark {
     @Benchmark
     @Group("g1")
     @GroupThreads(1)
+    @OperationsPerInvocation(10)
     public void producer1() {
         produce();
     }
@@ -58,6 +60,7 @@ public class QueueBenchmark {
     @Benchmark
     @Group("g1")
     @GroupThreads(1)
+    @OperationsPerInvocation(10)
     public void consumer1(Blackhole bh) {
         consume(bh);
     }
@@ -65,6 +68,7 @@ public class QueueBenchmark {
     @Benchmark
     @Group("g2")
     @GroupThreads(4)
+    @OperationsPerInvocation(10)
     public void producer4() {
         produce();
     }
@@ -72,6 +76,7 @@ public class QueueBenchmark {
     @Benchmark
     @Group("g2")
     @GroupThreads(4)
+    @OperationsPerInvocation(10)
     public void consumer4(Blackhole bh) {
         consume(bh);
     }
@@ -79,6 +84,7 @@ public class QueueBenchmark {
     @Benchmark
     @Group("g3")
     @GroupThreads(8)
+    @OperationsPerInvocation(10)
     public void producer8() {
         produce();
     }
@@ -86,6 +92,7 @@ public class QueueBenchmark {
     @Benchmark
     @Group("g3")
     @GroupThreads(8)
+    @OperationsPerInvocation(10)
     public void consumer8(Blackhole bh) {
         consume(bh);
     }
@@ -93,6 +100,7 @@ public class QueueBenchmark {
     @Benchmark
     @Group("g4")
     @GroupThreads(16)
+    @OperationsPerInvocation(10)
     public void producer16() {
         produce();
     }
@@ -100,17 +108,21 @@ public class QueueBenchmark {
     @Benchmark
     @Group("g4")
     @GroupThreads(16)
+    @OperationsPerInvocation(10)
     public void consumer16(Blackhole bh) {
         consume(bh);
     }
 
-    public final void main(String args[]) throws RunnerException {
+    // Run from IDE, gradle as ./gradlew jmh, or
+    // java -cp ./build/libs/jbcnconf-0.1-SNAPSHOT-jmh.jar  com.github.srvaroa.queue.QueueBenchmark
+    public static void main(String args[]) throws RunnerException {
         Options opt = new OptionsBuilder()
                 .include(QueueBenchmark.class.getSimpleName())
                 .warmupIterations(5)
                 .measurementIterations(5)
-                .verbosity(VerboseMode.EXTRA) //VERBOSE OUTPUT
-                .addProfiler(HotspotRuntimeProfiler.class)
+                // Q: what are these for?
+                // .verbosity(VerboseMode.EXTRA) //VERBOSE OUTPUT
+                // .addProfiler(HotspotRuntimeProfiler.class)
                 .build();
         new Runner(opt).run();
     }

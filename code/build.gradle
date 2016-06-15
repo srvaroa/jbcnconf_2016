@@ -14,6 +14,7 @@ version = '0.1-SNAPSHOT'
 defaultTasks 'clean', 'build'
 
 apply plugin: 'java'
+apply plugin: 'scala'
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'me.champeau.gradle.jmh'
@@ -42,7 +43,9 @@ dependencies {
            'io.reactivex:rxjava:1.1.5',
            'org.jctools:jctools-core:1.2',
            'org.slf4j:slf4j-api:1.7.7',
-           'ch.qos.logback:logback-classic:1.1.3'
+           'ch.qos.logback:logback-classic:1.1.3',
+           'com.typesafe.akka:akka-actor_2.11:2.4.7',
+           'org.scala-lang:scala-library:2.11.7'
 
     testCompile 'junit:junit:4.12'
 }
@@ -56,8 +59,8 @@ repositories {
 }
 
 jmh {
-    include = '*.*'
     jmhVersion = "1.12"
+    include = "QueueBenchmark"
     warmupIterations = 5
     iterations = 5
     fork = 5
@@ -71,6 +74,7 @@ task wrapper(type: Wrapper) {
 
 test {
     testLogging { events "started", "passed", "skipped", "failed" }
+    maxParallelForks = 1
 }
 
 task runJettyServer(type: JavaExec) {
@@ -80,3 +84,14 @@ task runJettyServer(type: JavaExec) {
 }
 
 mainClassName = "com.github.srvaroa.queue.SimpleApp"
+
+run {
+    if (project.hasProperty("queue")) {
+        args += project.queue
+    }
+}
+
+task akka(type: JavaExec) {
+    classpath sourceSets.main.runtimeClasspath
+    main = "com.github.srvaroa.akka.AkkaApp"
+}

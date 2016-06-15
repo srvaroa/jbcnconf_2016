@@ -70,9 +70,6 @@ public class SafeQueue<T> implements Queue<T> {
                 return false;
         } while(!tail.compareAndSet(currTail, currTail + 1));
         final int idx = (int)currTail % buffer.length;
-        // TODO BROKEN: this needs a CAS
-        // probably a good idea to hide the comment and "find the bug"
-        // then introduce the JCTools solution
         buffer[idx] = t;
         unsafe.storeFence();
         return true;

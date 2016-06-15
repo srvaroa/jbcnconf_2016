@@ -14,6 +14,7 @@ public class ThreadProducer<T> extends LatchedThread {
 
     private final Queue q;
     private final Supplier<T> supplier;
+    public long produced = 0;
 
     public ThreadProducer(
             Queue q, int id, CountDownLatch latch, Supplier<T> supplier) {
@@ -28,7 +29,9 @@ public class ThreadProducer<T> extends LatchedThread {
         int failed = 0;
         super.run();
         while (true) {
-            if (!q.push(supplier.get())) {
+            if (q.push(supplier.get())) {
+                produced++;
+            } else {
                 failed++;
             }
             if (failed > 50) {

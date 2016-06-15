@@ -5,7 +5,7 @@ package com.github.srvaroa.queue;
  */
 public class JcToolsMpmcBackedQueueConcurrentTest extends QueueConcurrentTest {
     @Override
-    Queue<Integer> getInstance(int capacity) {
+    Queue<Long> getInstance(int capacity) {
         return new JcToolsMpmcBackedQueue<>(capacity);
     }
 }
