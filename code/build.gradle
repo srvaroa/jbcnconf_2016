@@ -80,3 +80,9 @@ task runJettyServer(type: JavaExec) {
 }
 
 mainClassName = "com.github.srvaroa.queue.SimpleApp"
+
+run {
+    if (project.hasProperty("queue")) {
+        args += project.queue
+    }
+}
