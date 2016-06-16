@@ -8,19 +8,21 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 4)
 @Fork(5)
 public class IterableBenchmark {
 
     private List<Integer> list;
+    private final int capacity = 1000000;
 
     @Setup
     public void setup() {
-        list = new ArrayList<>(100000);
+        list = new ArrayList<>(capacity);
         int i = 0;
-        while (i < list.size()) {
-            list.set(i, i);
+        while (i < capacity) {
+            list.add(i);
+            i++;
         }
     }
 
