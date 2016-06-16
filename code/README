@@ -14,3 +14,51 @@ Running
 =======
 
     java -cp ./build/libs/jbcnconf-0.1-SNAPSHOT-all.jar com.github.srvaroa.queue.SimpleApp  [queue class name]
+
+Contents
+========
+
+Inside src/main/
+
+Pull the thread from SimpleApp, it's a fairly simple application:
+
+A bunch of ThreadProducer instances emit Longs to a a Queue<Long>, where a
+bunch of ThreadConsumer instances will be reading.  This goes on until you
+cancel, then we show stats.
+
+Queue<T> has several implementations of different degrees of efficiency.  You
+can use the profiling tools suggested in the workshop to analyze the
+performance.
+
+You can switch queue implementation by passing the name of the class to the
+java command above.  For example, the default is:
+
+    java -cp ./build/libs/jbcnconf-0.1-SNAPSHOT-all.jar com.github.srvaroa .queue.SimpleApp  SynchronizedQueue
+
+There are a couple of additional apps provided: RxApp, AkkaApp.  Run,
+profile, and see how they behave.
+
+Inside src/test/
+
+Tests are provided both for the Queue contract, and concurrency.  Some
+implementations will fail concurrency tests due to subtle bugs, feel free to
+investigate them.  We have sprinkled some comments around the code with
+questions and pointers.
+
+Inside src/jmh/
+
+Several benchmarks for our code.  An IterableBenchmark is a basic case, you
+can move to QueueBenchmark for benchmarks for every queue type.
+
+
+Running a benchmark is easy:
+
+    ./gradlew jmhJar
+    java -cp ./build/libs/jbcnconf-0.1-SNAPSHOT-jmh.jar  com.github.srvaroa.queue.QueueBenchmark
+
+Or from gradle
+
+    ./gradlew jmh
+
+in this case you'll need to tweak the jmh task inside build.gradle to run the
+benchmark you want.   Getting it to work is part of the learning fun.
